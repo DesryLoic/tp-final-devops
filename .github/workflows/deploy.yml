@@ -35,6 +35,5 @@ jobs:
       - name: éploiement sur Kubernetes
         working-directory: ./Partie3_Kubernetes
         run: |
-          sudo apt-get install -y sshpass
           sshpass -p "vagrant" scp -o StrictHostKeyChecking=no mysql.yaml api.yaml vagrant@192.168.1.19:~
           sshpass -p "vagrant" ssh -o StrictHostKeyChecking=no vagrant@192.168.1.19 "sudo kubectl apply -f mysql.yaml && sudo kubectl apply -f api.yaml"
