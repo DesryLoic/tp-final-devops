@@ -13,9 +13,12 @@ jobs:
       - name: Récupération du code
         uses: actions/checkout@v3
 
-      - name: onfiguration de l'infrastructure (Terraform)
+      - name: Configuration de l'infrastructure (Terraform)
         working-directory: ./Partie1_Infrastructure
         run: |
+          cp -r ~/tp_final_desry_loic/Partie1_Infrastructure/.vagrant/ . 2>/dev/null || true
+          cp ~/tp_final_desry_loic/Partie1_Infrastructure/terraform.tfstate* . 2>/dev/null || true
+
           terraform init
           terraform apply -auto-approve
           ./get_ip.sh
