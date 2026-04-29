@@ -1,0 +1,37 @@
+name: Deploiement Automatique (CI/CD)
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploiement:
+    runs-on: self-hosted
+
+    steps:
+      - name: Récupération du code
+        uses: actions/checkout@v3
+
+      - name: onfiguration de l'infrastructure (Terraform)
+        working-directory: ./Partie1_Infrastructure
+        run: |
+          terraform init
+          terraform apply -auto-approve
+          ./get_ip.sh
+
+      - name: Connexion à Docker Hub
+        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+      - name: Builder et Pousser l'image Docker
+        working-directory: ./Partie2_Conteneurisation/api-lacets
+        run: |
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/api-lacets:latest .
+          docker push ${{ secrets.DOCKER_USERNAME }}/api-lacets:latest
+
+      - name: éploiement sur Kubernetes
+        working-directory: ./Partie3_Kubernetes
+        run: |
+          sudo apt-get install -y sshpass
+          sshpass -p "vagrant" scp -o StrictHostKeyChecking=no mysql.yaml api.yaml vagrant@192.168.1.19:~
+          sshpass -p "vagrant" ssh -o StrictHostKeyChecking=no vagrant@192.168.1.19 "sudo kubectl apply -f mysql.yaml && sudo kubectl apply -f api.yaml"
