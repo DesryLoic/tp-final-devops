@@ -1,0 +1,77 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-lacets
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: api-lacets
+  template:
+    metadata:
+      labels:
+        app: api-lacets
+    spec:
+      containers:
+        - name: api
+          image: loicdesry/api-lacets:latest
+          ports:
+            - containerPort: 3000
+          env:
+            - name: DB_HOST
+              value: "mysql-service"
+            - name: MYSQL_HOST
+              value: "mysql-service"
+            - name: MYSQL_USER
+              value: "root"
+            - name: MYSQL_PASSWORD
+              value: "rootpassword"
+            - name: MYSQL_DB
+              value: "my_db"
+            - name: DB_USER
+              value: "root"
+            - name: DB_PASSWORD
+              value: "rootpassword"
+            - name: DB_NAME
+              value: "my_db"
+            - name: PORT
+              value: "3000"
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "200m"
+              memory: "256Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-service
+spec:
+  type: ClusterIP
+  selector:
+    app: api-lacets
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 3000
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: api-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: api-lacets
+  minReplicas: 1
+  maxReplicas: 3
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 50

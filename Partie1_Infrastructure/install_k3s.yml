@@ -1,0 +1,23 @@
+---
+- name: Installation de K3s sur la VM Debian
+  hosts: k3s_master
+  become: yes
+
+  tasks:
+    - name: Telecharger et executer le script d'installation K3s
+      shell: curl -sfL https://get.k3s.io | sh -
+
+    - name: S'assurer que le service K3s est demarre et active au boot
+      service:
+        name: k3s
+        state: started
+        enabled: yes
+
+    - name: Verifier que le cluster Kubernetes (K3s) repond
+      command: k3s kubectl get nodes
+      register: k3s_status
+      changed_when: false
+
+    - name: Afficher le statut du cluster
+      debug:
+        msg: "{{ k3s_status.stdout_lines }}"

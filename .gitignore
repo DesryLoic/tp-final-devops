@@ -1,0 +1,7 @@
+.terraform/
+terraform.tfstate*
+.vagrant/
+node_modules/
+*:Zone.Identifier
+*.box
+generic-debian11*
