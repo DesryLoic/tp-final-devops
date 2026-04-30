@@ -32,8 +32,13 @@ jobs:
           docker build -t ${{ secrets.DOCKER_USERNAME }}/api-lacets:latest .
           docker push ${{ secrets.DOCKER_USERNAME }}/api-lacets:latest
 
-      - name: éploiement sur Kubernetes
+      - name: Déploiement sur Kubernetes
         working-directory: ./Partie3_Kubernetes
         run: |
           sshpass -p "vagrant" scp -o StrictHostKeyChecking=no mysql.yaml api.yaml vagrant@192.168.1.19:~
           sshpass -p "vagrant" ssh -o StrictHostKeyChecking=no vagrant@192.168.1.19 "sudo kubectl apply -f mysql.yaml && sudo kubectl apply -f api.yaml"
+
+      - name: Déploiement du Monitoring (Ansible)
+        run: |
+          cd Partie5_Monitoring
+          ansible-playbook -i inventory.ini install_monitoring.yml
