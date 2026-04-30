@@ -12,6 +12,8 @@ jobs:
     steps:
       - name: Récupération du code
         uses: actions/checkout@v3
+        with:
+          clean: false
 
       - name: Configuration de l'infrastructure (Terraform)
         working-directory: ./Partie1_Infrastructure

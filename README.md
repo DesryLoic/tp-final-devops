@@ -13,6 +13,10 @@ Voici comment sont organisés les fichiers pour garantir une structure claire :
 ```text
 tp_final_desry_loic/
 ├── README.md
+├── .gitignore
+├── .github/
+│   └── workflows/
+│       └── deploy.yml
 ├── Partie1_Infrastructure/
 │   ├── deploy.tf
 │   ├── get_ip.sh
@@ -28,9 +32,9 @@ tp_final_desry_loic/
 ```
 ---
 
-## 🛠️ Partie 1 : Préparation de l'infrastructure
+## Partie 1 : Préparation de l'infrastructure
 
-L'objectif de cette première étape est de mettre en place les fondations techniques du projet. Nous automatisons le déploiement d'une machine virtuelle Debian et l'installation d'un **K3s**. 
+Dans la première partie, nous automatisons le déploiement d'une machine virtuelle Debian et l'installation d'un **K3s**. 
 
 ### 1. Provisionnement de la VM (Terraform)
 Nous utilisons **Terraform** pour définir et créer l'infrastructure. Le fichier `deploy.tf` configure une machine Debian sur VirtualBox avec les ressources optimisées (2 Go de RAM).
@@ -62,7 +66,7 @@ ansible-playbook -i inventory.ini install_k3s.yml
 
 ## Partie 2 : Conteneurisation de l'application
 
-L'objectif de cette partie est de packager l'API Node.js dans une image Docker optimisée et de la rendre disponible publiquement sur Docker Hub.
+Pour cette partie  deon doit packager l'API Node.js dans une image Docker optimisée et de la rendre disponible publiquement sur Docker Hub.
 
 ### 1. Optimisation du Dockerfile
 Nous avons cloné le code source de l'API et créé un `Dockerfile`. Pour répondre aux fortes exigences d'optimisation de la taille de l'image, nous avons mis en place plusieurs bonnes pratiques :
@@ -71,7 +75,7 @@ Nous avons cloné le code source de l'API et créé un `Dockerfile`. Pour répon
 * Sécurisation du conteneur en utilisant l'utilisateur non-root `USER node`.
 
 ### 2. Build et Push sur Docker Hub
-L'image a été construite localement puis poussée sur le registre public Docker Hub. L'optimisation a permis d'obtenir une image finale très légère (environ 50 Mo).
+L'image a été construite localement puis poussée sur le registre public Docker Hub. L'optimisation a permis d'obtenir une image finale très légère.
 
 **Commandes exécutées :**
 ```bash
@@ -79,11 +83,13 @@ docker build -t loicdesry/api-lacets:latest .
 docker push loicdesry/api-lacets:latest
 ```
 
+La connexion à la base de données a été gérée dynamiquement en injectant la variable `DB_HOST=mysql-service` directement via les manifestes Kubernetes, garantissant une séparation stricte entre le code et la configuration de l'infrastructure.
+
 ---
 
-## ☸️ Partie 3 : Déploiement sur Kubernetes
+## Partie 3 : Déploiement sur Kubernetes
 
-L'objectif de cette étape est de déployer notre application conteneurisée et sa base de données sur notre cluster K3s, en respectant de strictes contraintes de sécurité, de persistance et de haute disponibilité.
+On doit déployer l'application et sa base de données sur le cluster K3s, en respectant de strictes contraintes de sécurité, de persistance et de haute disponibilité.
 
 ### 1. Base de données MySQL
 Le manifeste de la base de données (`mysql.yaml`) est conçu pour être résilient :
@@ -102,3 +108,16 @@ Le manifeste de l'API (`api.yaml`) récupère l'image optimisée lors de la phas
 kubectl apply -f mysql.yaml
 kubectl apply -f api.yaml
 ```
+
+---
+
+## Partie 4 : Pipeline CI/CD
+
+L'intégralité du processus est désormais automatisé via GitHub Actions. À chaque `git push` sur la branche `main`, un **Runner Self-Hosted** (exécuté sur la machine locale) déclenche les étapes suivantes :
+
+1. **Configurer l'infrastructure** : Exécution de `terraform apply` pour garantir que les VMs sont prêtes et à jour.
+2. **CI** : Connexion sécurisée à Docker Hub via GitHub Secrets, Build de l'image de l'API et Push de l'image mise à jour.
+3. **CD** : Connexion SSH à la VM Kubernetes pour déployer les nouveaux manifestes (`kubectl apply`).
+
+**Sécurité :** Aucun identifiant n'est écrit en clair. La pipeline utilise des `secrets` GitHub pour Docker Hub et des clés SSH pour les serveurs.
+
