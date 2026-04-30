@@ -28,7 +28,7 @@ resource "virtualbox_vm" "debian_node" {
 
 #Pour la Partie 5, la nouvelle VM
 resource "virtualbox_vm" "monitoring" {
-  name      = "vm_monitoring"
+  name      = "vm_grafana"
   image     = "https://app.vagrantup.com/generic/boxes/debian11/versions/4.2.16/providers/virtualbox.box"
   cpus      = 1
   memory    = "1024 mib"
