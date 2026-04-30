@@ -26,6 +26,17 @@ resource "virtualbox_vm" "debian_node" {
   }
 }
 
+#Pour la Partie 5, la nouvelle VM
+resource "virtualbox_vm" "monitoring" {
+  name      = "vm_monitoring"
+  image     = "https://app.vagrantup.com/generic/boxes/debian11/versions/4.2.16/providers/virtualbox.box"
+  cpus      = 1
+  memory    = "1024 mib"
+  network_adapter {
+    type           = "bridged"
+    host_interface = var.network_host_if
+  }
+}
 output "vm_ip" {
   value = virtualbox_vm.debian_node[0].network_adapter[0].ipv4_address
 }
